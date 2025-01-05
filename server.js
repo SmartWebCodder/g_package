@@ -16,7 +16,7 @@ mongoose.connect(process.env.MONGODB_URI);
 const userRoutes = require('./routes/user');
 const dashboardRoutes = require('./routes/dashboard');
 
-app.use('/api/users', userRoutes);
+app.use('/api/user', userRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
 // Start the server

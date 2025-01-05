@@ -1,25 +1,12 @@
-const bcrypt = require('/bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const registerValidation = require('../Validation/registerValidation');
+const loginValidation = require('../Validation/loginValidation');
 
 exports.register = async (req, res) => {
-    const { username, email, password } = req.body;
-
-    // Check required fields
-    if (!username || !email || !password) {
-      return res.status(400).json({
-        statusCode: 400,
-        message: 'Username, email, and password are required.'
-      });
-    }
-  
-    // Check password length
-    if (password.length < 8) {
-      return res.status(400).json({
-        statusCode: 400,
-        message: 'Password must be at least 8 characters long.'
-      });
-    }
+    registerValidation(req, res, async () => {
+        const { username, email, password, phone } = req.body;
   
     try {
       // Check if username or email already exists
@@ -35,14 +22,14 @@ exports.register = async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, 10);
   
       // Create a new user with userId
-      const user = new User({ username, email, password: hashedPassword });
+      const user = new User({ username, email, password: hashedPassword, phone });
       await user.save();
   
       // Return success response with userId
       res.status(200).json({
         statusCode: 200,
         message: 'User Registered',
-        userId: user.userId // Include userId in the response
+        userId: user.userId 
       });
     } catch (error) {
       console.error('Error registering user:', error);
@@ -51,20 +38,15 @@ exports.register = async (req, res) => {
         message: 'Internal server error'
       });
     }
+    
+    });
 };
 
 exports.login = async (req, res) => {
-    const { username, password } = req.body;
+    loginValidation(req, res, async () => {
+        const {email, password } = req.body;
 
-  // Check required fields
-  if (!username || !password) {
-    return res.status(400).json({
-      statusCode: 400,
-      message: 'Username and password are required.'
-    });
-  }
-
-  const user = await User.findOne({ username });
+  const user = await User.findOne({ email });
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.status(401).json({
       statusCode: 401,
@@ -85,9 +67,12 @@ exports.login = async (req, res) => {
     message: 'Login successful',
     userId: user.userId,
     username: user.username,
+    phone: user.phone,
     email: user.email,
     token: token
   });
+
+});
 };
 
 exports.forgetPassword = async (req, res) => {
